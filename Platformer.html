@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML Game</title>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #game-container { position: relative; border: 4px solid #333; box-shadow: 0 0 50px rgba(0,240,255,0.2); }
+        canvas { background: #000; display: block; }
+        #ui { position: absolute; top: 15px; left: 15px; font-weight: bold; letter-spacing: 2px; color: #00f0ff; pointer-events: none; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui">ROOM: <span id="rc">0</span> | DEATHS: <span id="dc">0</span></div>
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+    </div>
+
+<script>
+const compressedProject = "W1tbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMSwxLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDEsMCwwLDEsMSwxLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwxLDAsMCwxLDAsMCwwLDEsMCwxLDAsMCwwXSxbMCwwLDEsMSwxLDAsMCwwLDAsMCwxLDEsMCwwLDBdLFswLDAsMCwxLDEsMCwwLDAsMCwwLDEsMSwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1sxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwxLDAsMCwxLDEsMSwxLDEsMSwxXSxbMSwxLDEsMSwwLDAsMCwwLDAsMCwxLDEsMSwxLDFdLFsxLDEsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDEsMV0sWzEsMSwxLDAsMCwwLDAsMCwwLDAsMCwxLDEsMSwxXSxbMSwxLDEsMSwwLDAsNywwLDAsMSwxLDEsMSwxLDFdLFsxLDEsMCwwLDAsMCwwLDAsMiwwLDAsMCwxLDEsMV0sWzEsMSwwLDAsMCwwLDAsMCwxLDEsMCwwLDEsMSwxXSxbMSwxLDEsMiwxMCwxLDEsMSwxLDEsMywzLDEsMSwxXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFsxLDAsMSwwLDAsMCwwLDAsMCwwLDAsMSwwLDAsMV0sWzEsMSwwLDAsMCwwLDAsMCwwLDAsMSwxLDEsMCwwXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdLFsxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxXV0sW1sxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwxLDAsMCwwLDEsMSwxLDEsMSwxXSxbMSwxLDEsMCwwLDAsMCwwLDAsMCwwLDEsMSwxLDFdLFsxLDEsMCwwLDAsMCwwLDAsMCwwLDAsMSwxLDEsMV0sWzEsMCwwLDAsMCw3LDAsMCwwLDAsMCwwLDEsMSwxXSxbMCwwLDAsMCwwLDEsMSwwLDAsMCwwLDAsMSwxLDFdLFswLDAsMSwxLDEsMSwxLDEsMSwxLDAsMCwxLDEsMV0sWzEsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxXSxbMSwzLDEwLDIseyJ0eXBlIjoicHNoIiwiaWQiOiIxIiwiZGlyIjoiMSJ9LDAsMCwwLDAsMiwwLHsidHlwZSI6ImJ0biIsImlkIjoiMSJ9LDMsMywxXSxbMSwxLDEsMSwxLDYsMSwxLDYsMSwxLDEsMSwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDBdLFswLDEsMSwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1sxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMTAsMV0sWzEsMCwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxXSxbMSwwLDAsMCwwLDAsMCwwLDAsMCwwLDIsMCwwLDFdLFsxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwwLDAsMV0sWzEsMSwxLDEsMSwwLDAsMCwwLDAsMCwwLDAsMCwxXSxbMSwxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDFdLFsxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMCwwLDcsMCwwLDIsMCwwLDAsMSwwLDAsMywxXSxbMSw2LDYsMSw2LDYsMSw2LDYsMSwxLDYsNiwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwxLDEsMSwwLDEsMSwxLDBdLFswLDAsMCwwLDAsMCwxLDAsMCwxLDAsMSwxLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1sxLDAsMCwwLDAsMCwyLDEwLDAsMCwwLDAsMCwwLDFdLFsxLDEsMCwwLDAsMCwxLDEsMCwwLDAsMCwwLDAsMV0sWzEsMSwxLDYsNiw2LDYsMSx7InR5cGUiOiJidG4iLCJpZCI6IjIifSwwLDAsMCwwLDAsMV0sWzEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMCwxXSxbMSwxLDEsMSwxLDEsMSwwLDAsMCwxLDAsMCwyLHsidHlwZSI6InBzaCIsImlkIjoiMiIsImRpciI6IjEifV0sWzEsMSwxLDAsMCwwLDAseyJ0eXBlIjoicHNoIiwiaWQiOiIxIiwiZGlyIjoiMCJ9LDIsMCx7InR5cGUiOiJidG4iLCJpZCI6IjEifSwwLDMsMSwxXSxbMSwwLDAsMCwwLDAsMCwwLDEsMCwxLDEsMSwxLDFdLFsxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDEsMV0sWzEsMCwwLDAsMCwwLDAsMCwzLDMsMywwLDAsNywxXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdXSxbWzAsMSwxLDEsMSwxLDEsMCwwLDAsMCwwLDAsMCwwXSxbMCwxLDEsMSwxLDEsMSwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwxLDEsMSwxLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDEsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1sxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxXSxbMSwxLDAsMCwxLDAsMCwwLDEsMCwwLDAsMCwxLDFdLFsxLDEsMCwwLDAsMCwyLDAsMCwwLDIsMCwwLDEsMV0sWzEsMSwwLDAsMiwwLDEsMCwyLDAsMSwwLDcsMSwxXSxbMSwxLDEwLDEsMSwzLDEsMywxLDMsMSwzLDEsMSwxXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdLFsxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDAsMF0sWzAsMCwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMCwwXSxbMCwwLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwwLDBdLFswLDAsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDEsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDEsMSwxLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDEsMSwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwxLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDEsMSwxLDEsMSwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDEsMSwxLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDEsMSwxLDEsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxLDEsMCwwXV0sW1sxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzEsMSwxLDEsMSwwLDEsMSwxLDEsMCwwLDEsMSwxXSxbMSwwLDEsMCwwLDAsMCwwLDEsMSwwLDAsMCwxLDFdLFsxLDAsMCwwLDAsMCw3LDAsMCwxLDEsMCwwLDAsMV0sWzEsMCwyLHsidHlwZSI6InBzaCIsImlkIjoiMiIsImRpciI6IjEifSwwLDAsMix7InR5cGUiOiJwc2giLCJpZCI6IjEiLCJkaXIiOiIxIn0sMCwxLDEsMSwxLDAsMV0sWzAsMCwxLDEsMCwwLDEsMCwwLDAsMSwxLDEsMSwxXSxbMSwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDFdLFsxLDMsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMSwxLHsidHlwZSI6ImJ0biIsImlkIjoiMiJ9LDMsMywzLDAsMCwwLHsidHlwZSI6ImJ0biIsImlkIjoiMSJ9LDAsMCwxMCwxXSxbMSwxLDEsMSwxLDEsMSwxLDYsMSwxLDYsNiwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1swLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDAsMF0sWzAsMCwxLDEsMSwxLDEsMSwxLDEsMSwwLDAsMCwwXSxbMCwwLDAsMCwxLDEsMSwxLDAsMCwyLDAsMCwwLDBdLFswLDAsMCwwLDAsMix7InR5cGUiOiJwc2giLCJpZCI6IjEiLCJkaXIiOiIxIn0sMTAsMCwwLDEsMCwwLDAsMF0sWzAsMCwwLDAsMCwxLDEsMSwxLDEsMSwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwxLDEsMCwwLDAsMCwwLDBdLFswLDAsMCw3LDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwzLDAsMywwXSxbNiw2LDYsNiw2LDYsNiwxLDEsNiw2LDEseyJ0eXBlIjoiYnRuIiwiaWQiOiIxIn0sMSw2XSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdXSxbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV1dLFtbWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFswLDAsMCwwLDAsMSwxLDEsMSwxLDEsMSwxLDEsMV0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMCwwLDAsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdLFswLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXV0sW1sxLDEsMSwxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMSwxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwXSxbMSwxLDAsMCwzLDAsMywwLDMsMCwzLDAsMywwLDNdLFsxLDAsMCwzLDEsNiwxLDMsMSw2LDEsMywxLDYsMV0sWzAsMCwzLDEsMywxLDAsMSwwLDEsMCwxLDAsMSwwXSxbMCwzLDEsMCwxLDAsMCwwLDAsMCwwLDAsMCwwLDBdLFszLDEsMywxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMF0sWzEsMiwxLDEwLDAseyJ0eXBlIjoiYnRuIiwiaWQiOiIyIn0sMCwwLDAsMCx7InR5cGUiOiJidG4iLCJpZCI6IjEifSwzLDcsMCwwXSxbMSwxLDEsMSwxLDEseyJ0eXBlIjoicHNoIiwiaWQiOiIyIiwiZGlyIjoiMCJ9LDIsMyx7InR5cGUiOiJwc2giLCJpZCI6IjEiLCJkaXIiOiIxIn0sMSwxLDEsNiw2XSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdXSxbWzEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxXSxbMSwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDFdLFsxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxXSxbMSwwLDAsMCwwLDAsMCwwLDAsMCwwLDcsMCwwLDFdLFsxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMCwwLDAsMCwzLDMsMSw2LDYsNiw2LDYsNiwxXSxbMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDEsMSwxLDFdLFsxLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMV0sWzEsMCwwLDAsMCwwLDAsMCwwLDAsMCwwLDAsMCwxXV1dXQ==";
+
+function decodeData(str) {
+    return JSON.parse(atob(str));
+}
+
+const projectData = decodeData(compressedProject);
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const TILE_SIZE = 40;
+
+let currentRoomIdx = 0;
+let player = { x:0, y:0, w:20, h:20, vx:0, vy:0, grounded:false, deaths:0 };
+let moveableBlocks = [], activeButtons = {}, keys = {};
+
+window.onkeydown = e => keys[e.code] = true;
+window.onkeyup = e => keys[e.code] = false;
+
+function loadRoom(idx) {
+    if (idx >= projectData.length) idx = 0;
+    currentRoomIdx = idx;
+    document.getElementById("rc").innerText = currentRoomIdx;
+    moveableBlocks = [];
+    const mainLayer = projectData[currentRoomIdx][1];
+    mainLayer.forEach((row, r) => row.forEach((t, c) => {
+        if(t === 10) {
+            player.x = c * TILE_SIZE + (TILE_SIZE - player.w) / 2;
+            player.y = r * TILE_SIZE + (TILE_SIZE - player.h) / 2;
+            player.vx = 0;
+            player.vy = 0;
+        }
+        if(t === 2) moveableBlocks.push({ x:c*40, y:r*40, vx:0, vy:0, w:40, h:40 });
+    }));
+}
+
+function checkRectCollision(x, y, w, h) {
+    const mainLayer = projectData[currentRoomIdx][1];
+    if (x < 0 || x + w > canvas.width || y < 0 || y + h > canvas.height) return true;
+    for(let r = Math.floor(y/TILE_SIZE); r <= Math.floor((y+h-0.1)/TILE_SIZE); r++) {
+        for(let c = Math.floor(x/TILE_SIZE); c <= Math.floor((x+w-0.1)/TILE_SIZE); c++) {
+            if(r < 0 || r >= 10 || c < 0 || c >= 15) continue;
+            let t = mainLayer[r][c];
+            if(t === 1) return true;
+            if(t && t.type === 'psh') {
+                if(x < c*40+40 && x+w > c*40 && y < r*40+40 && y+h > r*40) return true;
+                if(activeButtons[t.id]) {
+                    let ax = c*40, ay = r*40;
+                    if(t.dir == 0) ax += 40; if(t.dir == 1) ax -= 40;
+                    if(t.dir == 2) ay -= 40; if(t.dir == 3) ay += 40;
+                    if(x < ax+40 && x+w > ax && y < ay+40 && y+h > ay) return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function update() {
+    activeButtons = {};
+    const mainLayer = projectData[currentRoomIdx][1];
+    mainLayer.forEach((row, r) => row.forEach((t, c) => {
+        if(t && t.type === 'btn') {
+            let bR = {x:c*40, y:r*40, w:40, h:40};
+            let p = (player.x < bR.x+bR.w && player.x+player.w > bR.x && player.y < bR.y+bR.h && player.y+player.h > bR.y);
+            moveableBlocks.forEach(mb => {
+                if(mb.x < bR.x+bR.w && mb.x+mb.w > bR.x && mb.y < bR.y+bR.h && mb.y+mb.h > bR.y) p = true;
+            });
+            if(p) activeButtons[t.id] = true;
+        }
+    }));
+    player.vx = (keys["ArrowLeft"]||keys["KeyA"]?-4:(keys["ArrowRight"]||keys["KeyD"]?4:0));
+    player.x += player.vx;
+    moveableBlocks.forEach(b => {
+        if (player.x < b.x+b.w && player.x+player.w > b.x && player.y < b.y+b.h && player.y+player.h > b.y) {
+            let overlap = (player.vx > 0) ? (player.x+player.w-b.x) : (player.x-(b.x+b.w));
+            b.x += overlap;
+            if(checkRectCollision(b.x, b.y, b.w, b.h)) {
+                b.x -= overlap;
+                player.x -= overlap;
+            }
+        }
+    });
+    if(checkRectCollision(player.x, player.y, player.w, player.h)) { player.x -= player.vx; player.vx = 0; }
+    [...moveableBlocks, player].forEach(obj => {
+        let isP = (obj === player);
+        obj.vy = (obj.vy || 0) + 0.45;
+        obj.y += obj.vy;
+        if(isP) obj.grounded = false;
+        if(checkRectCollision(obj.x, obj.y, obj.w, obj.h)) {
+            if(obj.vy > 0 && isP) obj.grounded = true;
+            obj.y -= obj.vy;
+            obj.vy = 0;
+        }
+        if(isP) {
+            moveableBlocks.forEach(b => {
+                if (obj.x < b.x+b.w && obj.x+obj.w > b.x && obj.y < b.y+b.h && obj.y+obj.h > b.y) {
+                    if (obj.vy > 0) { obj.grounded=true; obj.y=b.y-obj.h; obj.vy=0; }
+                    else if (obj.vy < 0) { obj.y=b.y+b.h; obj.vy=0; }
+                }
+            });
+        }
+    });
+    if((keys["Space"]||keys["ArrowUp"]||keys["KeyW"]) && player.grounded) player.vy = -8.5;
+    let centerX = player.x + player.w/2;
+    let centerY = player.y + player.h/2;
+    let rc = Math.floor(centerY/40), cc = Math.floor(centerX/40);
+    let t = (mainLayer[rc] && mainLayer[rc][cc]) ? mainLayer[rc][cc] : 0;
+    if(t === 3 || t === 6) {
+        player.deaths++;
+        document.getElementById("dc").innerText = player.deaths;
+        loadRoom(currentRoomIdx);
+    }
+    if(t === 7) loadRoom(currentRoomIdx + 1);
+}
+
+function draw() {
+    update();
+    ctx.clearRect(0,0,600,400);
+    const room = projectData[currentRoomIdx];
+    for(let l=0; l<3; l++) {
+        room[l].forEach((row, r) => row.forEach((t, c) => {
+            if(!t) return;
+            const px=c*40, py=r*40;
+            ctx.globalAlpha = (l==0?0.3:l==2?0.6:1);
+            if(t===1) { ctx.fillStyle="#2c3e50"; ctx.fillRect(px,py,40,40); }
+            if(t===3) { ctx.fillStyle="#e74c3c"; ctx.beginPath(); ctx.moveTo(px,py+40); ctx.lineTo(px+20,py+10); ctx.lineTo(px+40,py+40); ctx.fill(); }
+            if(t===6) { ctx.fillStyle="#e67e22"; ctx.fillRect(px,py+20,40,20); }
+            if(t===7) { ctx.fillStyle="#f1c40f"; ctx.beginPath(); ctx.arc(px+20,py+20,12,0,Math.PI*2); ctx.fill(); }
+            if(t.type==='btn') { ctx.fillStyle=activeButtons[t.id]?"#00f0ff":"#1abc9c"; ctx.fillRect(px+5,py+35,30,5); }
+            if(t.type==='psh') {
+                ctx.fillStyle="#555"; ctx.fillRect(px,py,40,40);
+                if(activeButtons[t.id]) {
+                    ctx.fillStyle="#00f0ff";
+                    if(t.dir==0) ctx.fillRect(px+40,py+5,10,30); if(t.dir==1) ctx.fillRect(px-10,py+5,10,30);
+                    if(t.dir==2) ctx.fillRect(px+5,py-10,30,10); if(t.dir==3) ctx.fillRect(px+5,py+40,30,10);
+                }
+            }
+        }));
+    }
+    moveableBlocks.forEach(b => { ctx.fillStyle="#f39c12"; ctx.fillRect(b.x,b.y,40,40); ctx.strokeStyle="white"; ctx.strokeRect(b.x,b.y,40,40); });
+    ctx.globalAlpha=1; ctx.fillStyle="#00f0ff"; ctx.fillRect(player.x,player.y,player.w,player.h);
+    requestAnimationFrame(draw);
+}
+
+loadRoom(0);
+draw();
+</script>
+</body>
+</html>
