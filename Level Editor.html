@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML Editor</title>
+    <style>
+        :root { --bg: #1a1a1a; --panel: #2d2d2d; --accent: #00f0ff; --danger: #c0392b; --success: #27ae60; }
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; background: var(--bg); color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        
+        canvas { background: #000; border: 4px solid #333; cursor: crosshair; box-shadow: 0 10px 30px rgba(0,0,0,0.5); image-rendering: pixelated; }
+        
+        .ui-panel { margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; background: var(--panel); padding: 15px; border-radius: 10px; width: 920px; border: 1px solid #444; }
+        .label { width: 100%; text-align: left; font-size: 10px; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; }
+        
+        button { padding: 8px 14px; cursor: pointer; background: #3d3d3d; color: #ccc; border: 1px solid #555; border-radius: 4px; font-size: 12px; transition: all 0.2s; font-weight: 600; }
+        button:hover { background: #4d4d4d; color: white; border-color: #777; }
+        button.active { background: var(--accent); color: #000; border-color: #fff; box-shadow: 0 0 10px rgba(0,240,255,0.4); }
+        
+        .room-nav { display: flex; align-items: center; gap: 10px; background: #222; padding: 10px 20px; border-radius: 30px; margin-bottom: 15px; border: 1px solid #444; }
+        #roomLabel { font-weight: bold; color: var(--accent); min-width: 100px; text-align: center; font-size: 16px; font-family: monospace; }
+        
+        textarea { width: 920px; height: 80px; background: #000; color: #00ff41; font-family: 'Consolas', monospace; border-radius: 8px; padding: 10px; border: 1px solid #333; font-size: 11px; margin-top: 15px; resize: none; }
+        textarea::placeholder { color: #004410; }
+    </style>
+</head>
+<body>
+
+    <div class="room-nav">
+        <button onclick="changeRoom(-1)">◀ Prev Room</button>
+        <span id="roomLabel">ROOM: 0</span>
+        <button onclick="changeRoom(1)">Next Room ▶</button>
+        <button onclick="addRoom()" style="background: var(--success); color: white; border:none;">+ New Room</button>
+        <button onclick="deleteRoom()" style="background: var(--danger); color: white; border:none;">Delete Room</button>
+    </div>
+
+    <div class="ui-panel">
+        <div class="label">View Layers</div>
+        <button id="l0" class="layer-btn" onclick="setLayer(0)">Layer 0: Background</button>
+        <button id="l1" class="layer-btn active" onclick="setLayer(1)">Layer 1: Main (Collision)</button>
+        <button id="l2" class="layer-btn" onclick="setLayer(2)">Layer 2: Foreground</button>
+        <div style="flex-grow: 1"></div>
+        <button onclick="exportData()" style="background:#2980b9; color:white; border:none;">EXPORT (COMPRESSED)</button>
+        <button onclick="importData()" style="background:#f39c12; color:white; border:none;">IMPORT</button>
+    </div>
+
+    <div class="ui-panel">
+        <div class="label">Tile Palette</div>
+        <button class="tool active" onclick="setTool(1)">Wall (Solid)</button>
+        <button class="tool" onclick="setTool(2)">Movable Block</button>
+        <button class="tool" onclick="setTool(3)">Spikes (Lethal)</button>
+        <button class="tool" onclick="setTool(6)">Lava (Lethal)</button>
+        <button class="tool" onclick="setTool(7)">Goal (Next Room)</button>
+        <button class="tool" onclick="setTool(10)">Spawn Point</button>
+        <button class="tool" onclick="setTool('btn')">Button (Logic)</button>
+        <button class="tool" onclick="setTool('psh')">Pusher (Logic)</button>
+        <button class="tool" onclick="setTool(0)" style="color: #ff7675;">Eraser</button>
+    </div>
+
+    <canvas id="editorCanvas" width="600" height="400"></canvas>
+    
+    <textarea id="ioField" placeholder="Compressed level data will appear here..."></textarea>
+
+<script>
+const canvas = document.getElementById("editorCanvas");
+const ctx = canvas.getContext("2d");
+const COLS = 15, ROWS = 10, TILE = 40;
+
+let currentTool = 1;
+let currentLayer = 1;
+let currentRoomIdx = 0;
+let isDrawing = false;
+
+let project = [ createBlankRoom() ];
+
+function createBlankRoom() {
+    return [
+        Array.from({length: ROWS}, () => Array(COLS).fill(0)),
+        Array.from({length: ROWS}, () => Array(COLS).fill(0)),
+        Array.from({length: ROWS}, () => Array(COLS).fill(0))
+    ];
+}
+
+function exportData() { 
+    try {
+        const jsonStr = JSON.stringify(project);
+        const compressed = btoa(jsonStr); 
+        document.getElementById("ioField").value = compressed;
+        alert("Level Data Compressed.");
+    } catch(e) {
+        alert("Export failed.");
+    }
+}
+
+function importData() { 
+    try {
+        const rawInput = document.getElementById("ioField").value.trim();
+        if(!rawInput) return;
+
+        const decoded = rawInput.startsWith('[') ? JSON.parse(rawInput) : JSON.parse(atob(rawInput));
+        
+        project = decoded;
+        currentRoomIdx = 0;
+        updateUI();
+        draw();
+    } catch(e) { 
+        alert("Invalid Data."); 
+    }
+}
+
+function changeRoom(dir) {
+    currentRoomIdx = Math.max(0, Math.min(project.length - 1, currentRoomIdx + dir));
+    updateUI();
+    draw();
+}
+
+function addRoom() {
+    project.push(createBlankRoom());
+    currentRoomIdx = project.length - 1;
+    updateUI();
+    draw();
+}
+
+function deleteRoom() {
+    if(project.length > 1 && confirm("Delete this room forever?")) {
+        project.splice(currentRoomIdx, 1);
+        currentRoomIdx = Math.max(0, currentRoomIdx - 1);
+        updateUI();
+        draw();
+    }
+}
+
+function updateUI() {
+    document.getElementById("roomLabel").innerText = `ROOM: ${currentRoomIdx}`;
+}
+
+canvas.onmousedown = (e) => { isDrawing = true; handleInput(e); };
+window.onmouseup = () => isDrawing = false;
+canvas.onmousemove = (e) => { if(isDrawing) handleInput(e); };
+
+function handleInput(e) {
+    const rect = canvas.getBoundingClientRect();
+    const c = Math.floor((e.clientX - rect.left) / TILE);
+    const r = Math.floor((e.clientY - rect.top) / TILE);
+    if(r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+
+    const layer = project[currentRoomIdx][currentLayer];
+
+    if(currentTool === 'btn' || currentTool === 'psh') {
+        if(!isDrawing) return;
+        if(currentTool === 'btn') {
+            const id = prompt("Link ID (1, 2, 3...):", "1");
+            project[currentRoomIdx][1][r][c] = id ? {type:'btn', id} : 0;
+        } else {
+            const id = prompt("Listen for ID:", "1");
+            const dir = prompt("Direction (0:Right, 1:Left, 2:Up, 3:Down):", "0");
+            project[currentRoomIdx][1][r][c] = id ? {type:'psh', id, dir} : 0;
+        }
+        isDrawing = false; 
+    } else {
+        layer[r][c] = currentTool;
+    }
+    draw();
+}
+
+function setTool(t) { 
+    currentTool = t; 
+    document.querySelectorAll('.tool').forEach(b => {
+        const isMatch = b.onclick.toString().includes(`'${t}'`) || b.onclick.toString().includes(`(${t})`);
+        b.classList.toggle('active', isMatch);
+    });
+}
+
+function setLayer(l) { 
+    currentLayer = l; 
+    document.querySelectorAll('.layer-btn').forEach((b, i) => b.classList.toggle('active', i === l));
+    draw(); 
+}
+
+function drawTile(t, x, y, lIdx) {
+    if(!t) return;
+    ctx.globalAlpha = (lIdx === currentLayer) ? 1.0 : 0.25;
+    const px = x * TILE, py = y * TILE;
+
+    if(t === 1) { ctx.fillStyle="#444"; ctx.fillRect(px,py,TILE,TILE); ctx.strokeStyle="#666"; ctx.strokeRect(px,py,TILE,TILE); }
+    if(t === 2) { ctx.fillStyle="#f39c12"; ctx.fillRect(px+4,py+4,32,32); ctx.strokeRect(px+4,py+4,32,32); }
+    if(t === 3) { ctx.fillStyle="#e74c3c"; ctx.beginPath(); ctx.moveTo(px,py+40); ctx.lineTo(px+20,py+10); ctx.lineTo(px+40,py+40); ctx.fill(); }
+    if(t === 6) { ctx.fillStyle="#e67e22"; ctx.fillRect(px,py+24,40,16); }
+    if(t === 7) { ctx.fillStyle="#f1c40f"; ctx.beginPath(); ctx.arc(px+20,py+20,12,0,Math.PI*2); ctx.fill(); }
+    if(t === 10) { ctx.fillStyle="#2ecc71"; ctx.font="bold 9px Arial"; ctx.fillText("START", px+5, py+25); }
+    
+    if(t.type === 'btn') { 
+        ctx.fillStyle="#1abc9c"; ctx.fillRect(px+5,py+35,30,5); 
+        ctx.fillStyle="white"; ctx.fillText("B"+t.id, px+12, py+20); 
+    }
+    if(t.type === 'psh') { 
+        ctx.fillStyle="#95a5a6"; ctx.fillRect(px,py,40,40); 
+        ctx.fillStyle="black"; ctx.fillText("P"+t.id, px+12, py+25); 
+    }
+    ctx.globalAlpha = 1.0;
+}
+
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    ctx.strokeStyle="#222";
+    ctx.lineWidth = 1;
+    for(let i=0; i<=COLS; i++) { ctx.beginPath(); ctx.moveTo(i*TILE,0); ctx.lineTo(i*TILE,400); ctx.stroke(); }
+    for(let i=0; i<=ROWS; i++) { ctx.beginPath(); ctx.moveTo(0,i*TILE); ctx.lineTo(600,i*TILE); ctx.stroke(); }
+    
+    for(let l=0; l<3; l++) {
+        project[currentRoomIdx][l].forEach((row, r) => {
+            row.forEach((tile, c) => drawTile(tile, c, r, l));
+        });
+    }
+}
+
+updateUI();
+draw();
+</script>
+</body>
+</html>
