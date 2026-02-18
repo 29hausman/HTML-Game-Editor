@@ -35,31 +35,24 @@ window.onkeydown = e => keys[e.code] = true;
 window.onkeyup = e => keys[e.code] = false;
 
 function loadRoom(idx) {
-    if (idx >= projectData.length) idx = 0;
-    currentRoomIdx = idx;
+    currentRoomIdx = idx % projectData.length;
     document.getElementById("rc").innerText = currentRoomIdx;
     moveableBlocks = [];
     const mainLayer = projectData[currentRoomIdx][1];
     mainLayer.forEach((row, r) => row.forEach((t, c) => {
-        if(t === 10) {
-            player.x = c * TILE_SIZE + (TILE_SIZE - player.w) / 2;
-            player.y = r * TILE_SIZE + (TILE_SIZE - player.h) / 2;
-            player.vx = 0;
-            player.vy = 0;
-        }
+        if(t === 10) { player.x = c*40+10; player.y = r*40+10; player.vx=0; player.vy=0; }
         if(t === 2) moveableBlocks.push({ x:c*40, y:r*40, vx:0, vy:0, w:40, h:40 });
     }));
 }
 
 function checkRectCollision(x, y, w, h) {
     const mainLayer = projectData[currentRoomIdx][1];
-    if (x < 0 || x + w > canvas.width || y < 0 || y + h > canvas.height) return true;
-    for(let r = Math.floor(y/TILE_SIZE); r <= Math.floor((y+h-0.1)/TILE_SIZE); r++) {
-        for(let c = Math.floor(x/TILE_SIZE); c <= Math.floor((x+w-0.1)/TILE_SIZE); c++) {
+    for(let r = Math.floor(y/TILE_SIZE); r <= Math.floor((y+h-1)/TILE_SIZE); r++) {
+        for(let c = Math.floor(x/TILE_SIZE); c <= Math.floor((x+w-1)/TILE_SIZE); c++) {
             if(r < 0 || r >= 10 || c < 0 || c >= 15) continue;
             let t = mainLayer[r][c];
             if(t === 1) return true;
-            if(t && t.type === 'psh') {
+            if(t.type === 'psh') {
                 if(x < c*40+40 && x+w > c*40 && y < r*40+40 && y+h > r*40) return true;
                 if(activeButtons[t.id]) {
                     let ax = c*40, ay = r*40;
@@ -76,69 +69,75 @@ function checkRectCollision(x, y, w, h) {
 function update() {
     activeButtons = {};
     const mainLayer = projectData[currentRoomIdx][1];
+
     mainLayer.forEach((row, r) => row.forEach((t, c) => {
-        if(t && t.type === 'btn') {
+        if(t.type === 'btn') {
             let bR = {x:c*40, y:r*40, w:40, h:40};
             let p = (player.x < bR.x+bR.w && player.x+player.w > bR.x && player.y < bR.y+bR.h && player.y+player.h > bR.y);
-            moveableBlocks.forEach(mb => {
-                if(mb.x < bR.x+bR.w && mb.x+mb.w > bR.x && mb.y < bR.y+bR.h && mb.y+mb.h > bR.y) p = true;
-            });
+            moveableBlocks.forEach(mb => { if(mb.x < bR.x+bR.w && mb.x+mb.w > bR.x && mb.y < bR.y+bR.h && mb.y+mb.h > bR.y) p = true; });
             if(p) activeButtons[t.id] = true;
         }
     }));
+
+    mainLayer.forEach((row, r) => row.forEach((t, c) => {
+        if (t.type === 'psh' && activeButtons[t.id]) {
+            let dir = parseInt(t.dir), px = c*40, py = r*40;
+            let zone = { x: px + (dir==0?40:dir==1?-40:0), y: py + (dir==2?-40:dir==3?40:0), w: 40, h: 40 };
+            moveableBlocks.forEach(b => {
+                if (b.x < zone.x+zone.w && b.x+b.w > zone.x && b.y < zone.y+zone.h && b.y+b.h > zone.y) {
+                    let s = 4;
+                    if(dir==0) b.x += s; if(dir==1) b.x -= s; if(dir==2) b.y -= s; if(dir==3) b.y += s;
+                    if(checkRectCollision(b.x, b.y, b.w, b.h)) {
+                        if(dir==0) b.x-=s; if(dir==1) b.x+=s; if(dir==2) b.y+=s; if(dir==3) b.y-=s;
+                    }
+                }
+            });
+        }
+    }));
+
     player.vx = (keys["ArrowLeft"]||keys["KeyA"]?-4:(keys["ArrowRight"]||keys["KeyD"]?4:0));
     player.x += player.vx;
     moveableBlocks.forEach(b => {
         if (player.x < b.x+b.w && player.x+player.w > b.x && player.y < b.y+b.h && player.y+player.h > b.y) {
             let overlap = (player.vx > 0) ? (player.x+player.w-b.x) : (player.x-(b.x+b.w));
             b.x += overlap;
-            if(checkRectCollision(b.x, b.y, b.w, b.h)) {
-                b.x -= overlap;
-                player.x -= overlap;
-            }
+            if(checkRectCollision(b.x, b.y, b.w, b.h)) { b.x-=overlap; player.x-=overlap; }
         }
     });
-    if(checkRectCollision(player.x, player.y, player.w, player.h)) { player.x -= player.vx; player.vx = 0; }
+    if(checkRectCollision(player.x, player.y, player.w, player.h)) { player.x-=player.vx; player.vx=0; }
+
     [...moveableBlocks, player].forEach(obj => {
         let isP = (obj === player);
-        obj.vy = (obj.vy || 0) + 0.45;
+        obj.vy = (obj.vy||0) + 0.45;
         obj.y += obj.vy;
         if(isP) obj.grounded = false;
         if(checkRectCollision(obj.x, obj.y, obj.w, obj.h)) {
-            if(obj.vy > 0 && isP) obj.grounded = true;
-            obj.y -= obj.vy;
-            obj.vy = 0;
+            if(isP && obj.vy > 0) obj.grounded = true;
+            obj.y -= obj.vy; obj.vy = 0;
         }
         if(isP) {
             moveableBlocks.forEach(b => {
                 if (obj.x < b.x+b.w && obj.x+obj.w > b.x && obj.y < b.y+b.h && obj.y+obj.h > b.y) {
-                    if (obj.vy > 0) { obj.grounded=true; obj.y=b.y-obj.h; obj.vy=0; }
+                    if (obj.vy > 0 && (obj.y+obj.h-obj.vy) <= b.y) { obj.grounded=true; obj.y=b.y-obj.h; obj.vy=0; }
                     else if (obj.vy < 0) { obj.y=b.y+b.h; obj.vy=0; }
                 }
             });
         }
     });
     if((keys["Space"]||keys["ArrowUp"]||keys["KeyW"]) && player.grounded) player.vy = -8.5;
-    let centerX = player.x + player.w/2;
-    let centerY = player.y + player.h/2;
-    let rc = Math.floor(centerY/40), cc = Math.floor(centerX/40);
+
+    let rc = Math.floor((player.y+10)/40), cc = Math.floor((player.x+10)/40);
     let t = (mainLayer[rc] && mainLayer[rc][cc]) ? mainLayer[rc][cc] : 0;
-    if(t === 3 || t === 6) {
-        player.deaths++;
-        document.getElementById("dc").innerText = player.deaths;
-        loadRoom(currentRoomIdx);
-    }
-    if(t === 7) loadRoom(currentRoomIdx + 1);
+    if(t === 3 || t === 6) { player.deaths++; document.getElementById("dc").innerText=player.deaths; loadRoom(currentRoomIdx); }
+    if(t === 7) { loadRoom(currentRoomIdx + 1); }
 }
 
 function draw() {
-    update();
-    ctx.clearRect(0,0,600,400);
+    ctx.clearRect(0,0,600,400); update();
     const room = projectData[currentRoomIdx];
     for(let l=0; l<3; l++) {
         room[l].forEach((row, r) => row.forEach((t, c) => {
-            if(!t) return;
-            const px=c*40, py=r*40;
+            if(!t) return; const px=c*40, py=r*40;
             ctx.globalAlpha = (l==0?0.3:l==2?0.6:1);
             if(t===1) { ctx.fillStyle="#2c3e50"; ctx.fillRect(px,py,40,40); }
             if(t===3) { ctx.fillStyle="#e74c3c"; ctx.beginPath(); ctx.moveTo(px,py+40); ctx.lineTo(px+20,py+10); ctx.lineTo(px+40,py+40); ctx.fill(); }
@@ -155,13 +154,11 @@ function draw() {
             }
         }));
     }
-    moveableBlocks.forEach(b => { ctx.fillStyle="#f39c12"; ctx.fillRect(b.x,b.y,40,40); ctx.strokeStyle="white"; ctx.strokeRect(b.x,b.y,40,40); });
+    moveableBlocks.forEach(b => { ctx.fillStyle="#f39c12"; ctx.fillRect(b.x,b.y,40,40); ctx.strokeRect(b.x,b.y,40,40); });
     ctx.globalAlpha=1; ctx.fillStyle="#00f0ff"; ctx.fillRect(player.x,player.y,player.w,player.h);
     requestAnimationFrame(draw);
 }
-
-loadRoom(0);
-draw();
+loadRoom(0); draw();
 </script>
 </body>
 </html>
